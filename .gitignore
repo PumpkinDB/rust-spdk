@@ -1,0 +1,5 @@
+.idea
+target/
+**/*.rs.bk
+*.swp
+Cargo.lock
