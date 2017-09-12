@@ -179,7 +179,7 @@ impl Namespace {
 #[derive(Debug)]
 pub struct Controller(*mut spdk_nvme_ctrlr);
 
-pub use super::clib::spdk_nvme_qprio as QueuePriority;
+pub use super::clib::{spdk_nvme_qprio as QueuePriority, spdk_nvme_io_qpair_opts as QueueOptions};
 
 macro_rules! ctrlr_data {
     ($name: ident, $field: ident) => {
@@ -193,8 +193,12 @@ macro_rules! ctrlr_data {
 }
 
 impl Controller {
-    pub fn alloc_io_queue_pair(&self, qprio: QueuePriority) -> Result<QueuePair, ()> {
-        let qpair = unsafe { spdk_nvme_ctrlr_alloc_io_qpair(self.0, qprio) };
+    pub fn alloc_io_queue_pair(&self, opts: Option<QueueOptions>) -> Result<QueuePair, ()> {
+        let (options, size) = match opts {
+            None => (::std::ptr::null(), 0),
+            Some(value) => (&value as *const super::clib::spdk_nvme_io_qpair_opts, ::std::mem::size_of::<QueueOptions>())
+        };
+        let qpair = unsafe { spdk_nvme_ctrlr_alloc_io_qpair(self.0, options, size) };
         if qpair.is_null() {
             Err(())
         } else {
@@ -287,9 +291,9 @@ mod tests {
             use std::rc::Rc;
             let ref ctrlr = self.0;
             let qpair = Rc::new(ctrlr.alloc_io_queue_pair(QueuePriority::SPDK_NVME_QPRIO_URGENT).unwrap());
-            let buf = Rc::new(Buffer::alloc_zeroed(4096 * 1024 * 2, 512));
+            let buf = Rc::new(DMA::alloc_zeroed(4096 * 1024 * 2, 512));
             (buf.as_slice_mut()[0..4]).copy_from_slice("test".as_bytes());
-            let rbuf = Rc::new(Buffer::alloc_zeroed(4096 * 1024 * 2, 512));
+            let rbuf = Rc::new(DMA::alloc_zeroed(4096 * 1024 * 2, 512));
 
             let namespaces = ctrlr.namespaces();
 

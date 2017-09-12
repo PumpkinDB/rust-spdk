@@ -22,15 +22,15 @@ use self::clib::*;
 use std::marker::PhantomData;
 
 #[derive(Debug)]
-pub struct Buffer<'a>(*mut ::std::os::raw::c_void, usize, PhantomData<&'a ()>);
+pub struct DMA<'a>(*mut ::std::os::raw::c_void, usize, PhantomData<&'a ()>);
 
-impl<'a> Buffer<'a> {
+impl<'a> DMA<'a> {
     pub fn alloc(size: usize, align: usize) -> Self {
-        Buffer(unsafe { spdk_malloc(size, align, null_mut()) }, size, PhantomData)
+        DMA(unsafe { spdk_dma_malloc(size, align, null_mut()) }, size, PhantomData)
     }
 
     pub fn alloc_zeroed(size: usize, align: usize) -> Self {
-        Buffer(unsafe { spdk_zmalloc(size, align, null_mut()) }, size, PhantomData)
+        DMA(unsafe { spdk_dma_zmalloc(size, align, null_mut()) }, size, PhantomData)
     }
 
     pub fn as_slice(&self) -> &'a [u8] {
@@ -43,9 +43,9 @@ impl<'a> Buffer<'a> {
 
 }
 
-impl<'a> Drop for Buffer<'a> {
+impl<'a> Drop for DMA<'a> {
     fn drop(&mut self) {
-        unsafe { spdk_free(self.0) }
+        unsafe { spdk_dma_free(self.0) }
     }
 }
 

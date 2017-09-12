@@ -18,13 +18,13 @@ fn exec(command_name: &str, mut cmd: Command) {
 
 fn main() {
     let mut make_dpdk = Command::new("make");
-    make_dpdk.current_dir(Path::new("dpdk"))
+    make_dpdk.current_dir(Path::new("spdk/dpdk"))
         .arg("install").arg("T=x86_64-native-linuxapp-gcc").arg("EXTRA_CFLAGS=-fPIC");
     exec("dpdk config", make_dpdk);
 
     let mut config_spdk = Command::new("./configure");
     config_spdk.current_dir(Path::new("spdk"))
-        .arg("--with-dpdk=../dpdk/x86_64-native-linuxapp-gcc");
+        .arg("--with-dpdk=dpdk/x86_64-native-linuxapp-gcc");
     exec("spdk config", config_spdk);
 
     let mut make_spdk = Command::new("make");
@@ -36,6 +36,6 @@ fn main() {
     println!("cargo:rustc-link-lib=static=spdk_util");
     println!("cargo:rustc-link-lib=static=spdk_nvme");
     println!("cargo:rustc-link-search=spdk/build/lib");
-    println!("cargo:rustc-link-lib=dpdk");
-    println!("cargo:rustc-link-search=dpdk/x86_64-native-linuxapp-gcc/lib");
+    println!("cargo:rustc-link-lib=spdk/dpdk");
+    println!("cargo:rustc-link-search=spdk/dpdk/x86_64-native-linuxapp-gcc/lib");
 }
